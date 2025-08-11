@@ -1,0 +1,41 @@
+{
+  "name": "ckan-gw-explorer",
+  "version": "0.1.0",
+  "private": false,
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "ckan",
+    "data-visualization",
+    "graphic-walker",
+    "react",
+    "typescript"
+  ],
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "@kanaries/graphic-walker": ">=0.4.0"
+  },
+  "devDependencies": {
+    "@kanaries/graphic-walker": "^0.4.76",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "rollup": "^3.29.5",
+    "rollup-plugin-dts": "^5.3.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-css-only": "^4.5.2",
+    "typescript": "^4.9.5"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build"
+  }
+}

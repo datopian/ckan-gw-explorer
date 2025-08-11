@@ -1,0 +1,21 @@
+{
+  "name": "ckan-gw-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/example"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=packages/core",
+    "dev": "npm run dev --workspace=packages/core",
+    "example": "npm run start --workspace=packages/example",
+    "example:dev": "npm run start-with-sync --workspace=packages/example",
+    "build:all": "npm run build --workspaces",
+    "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist",
+    "install:all": "npm install --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}
