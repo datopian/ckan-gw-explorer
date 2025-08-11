@@ -1,6 +1,6 @@
-# CKAN Graphic Walker Explorer - Monorepo
+# CKAN Graphic Walker Based Explorer
 
-A React component library for visualizing CKAN datasets using Graphic Walker, organized as a monorepo.
+A React component library for visualizing CKAN datasets using Graphic Walker.
 
 ## 📁 Project Structure
 
@@ -49,7 +49,6 @@ npm run start --workspace=packages/example
 
 ### Root Level
 - `npm run build` - Build the core library
-- `npm run dev` - Watch mode for core library
 - `npm run example` - Start example app
 - `npm run example:dev` - Start example with auto-rebuild
 - `npm run build:all` - Build all packages
