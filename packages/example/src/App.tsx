@@ -1,26 +1,38 @@
 import React from "react";
 import { CkanGraphicWalker } from "ckan-gw-explorer";
 
-function App() {
+function App(props: React.ComponentProps<typeof CkanGraphicWalker>) {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>CKAN Graphic Walker Explorer - Example App</h1>
-        <p>This example app demonstrates the CkanGraphicWalker component</p>
-      </header>
-      <main className="App-main">
-        <div className="component-demo">
-          <div className="component-container">
-            <CkanGraphicWalker
-              ckanUrl="http://ckan.com"
-              datasetId="012474d1-7506-469d-926f-0e7a3d9aa41a"
-              appearance="light"
-            />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+      <div className="app-gw-dataexplorer">
+        <CkanGraphicWalker
+          className="gw-dataexplorer"
+          initialSegment="data"
+          uiTheme={{
+            light: {
+              background: "white",
+              foreground: "#333",
+              primary: "#206b82",
+              "primary-foreground": "white",
+              muted: "#f8f9fa",
+              "muted-foreground": "#6c757d",
+              border: "#dee2e6",
+              ring: "#007bff",
+            },
+            dark: {
+              background: "#1a1a1a",
+              foreground: "#ffffff",
+              primary: "#007bff",
+              "primary-foreground": "white",
+              muted: "#2d2d2d",
+              "muted-foreground": "#a0a0a0",
+              border: "#404040",
+              ring: "#007bff",
+            },
+          }}
+          {...props}
+        />
+      </div>
+);
 }
 
 export default App;

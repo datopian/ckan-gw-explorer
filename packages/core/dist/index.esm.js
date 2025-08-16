@@ -75,32 +75,10 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 
 var CkanGraphicWalker = function (_a) {
     var _b, _c, _d, _e, _f, _g;
-    var _h = _a.ckanUrl, ckanUrl = _h === void 0 ? "http://localhost:5000" : _h, datasetId = _a.datasetId, _j = _a.initialSegment, initialSegment = _j === void 0 ? "data" : _j, _k = _a.timeout, timeout = _k === void 0 ? 1000000 : _k, _l = _a.appearance, appearance = _l === void 0 ? "light" : _l, _m = _a.className, className = _m === void 0 ? "ckan-gw-explorer" : _m, _o = _a.keepAlive, keepAlive = _o === void 0 ? true : _o, uiTheme = _a.uiTheme, defaultConfig = _a.defaultConfig, onFieldsLoaded = _a.onFieldsLoaded, onDataFetched = _a.onDataFetched, onError = _a.onError, _p = _a.disableWebSocket, disableWebSocket = _p === void 0 ? false : _p;
-    var _q = useState([]), fields = _q[0], setFields = _q[1];
-    var _r = useState(true), loading = _r[0], setLoading = _r[1];
+    var _h = _a.ckanUrl, ckanUrl = _h === void 0 ? "http://localhost:5000" : _h, resourceID = _a.resourceID, _j = _a.initialSegment, initialSegment = _j === void 0 ? "data" : _j, _k = _a.timeout, timeout = _k === void 0 ? 1000000 : _k, _l = _a.appearance, appearance = _l === void 0 ? "light" : _l, _m = _a.className, className = _m === void 0 ? "ckan-gw-explorer" : _m, _o = _a.keepAlive, keepAlive = _o === void 0 ? true : _o, uiTheme = _a.uiTheme, defaultConfig = _a.defaultConfig, onFieldsLoaded = _a.onFieldsLoaded, onDataFetched = _a.onDataFetched, onError = _a.onError;
+    var _p = useState([]), fields = _p[0], setFields = _p[1];
+    var _q = useState(true), loading = _q[0], setLoading = _q[1];
     var storeRef = useRef(null);
-    // Suppress WebSocket errors if disabled
-    useEffect(function () {
-        if (disableWebSocket) {
-            var originalError_1 = console.error;
-            console.error = function () {
-                var args = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    args[_i] = arguments[_i];
-                }
-                if (args[0] &&
-                    typeof args[0] === "string" &&
-                    args[0].includes("WebSocket")) {
-                    // Suppress WebSocket connection errors
-                    return;
-                }
-                originalError_1.apply(console, args);
-            };
-            return function () {
-                console.error = originalError_1;
-            };
-        }
-    }, [disableWebSocket]);
     // Default UI theme
     var defaultUiTheme = {
         light: {
@@ -136,7 +114,7 @@ var CkanGraphicWalker = function (_a) {
         },
     };
     useEffect(function () {
-        fetch("".concat(ckanUrl, "/api/3/action/show_dsl_metadata?datasetId=").concat(datasetId, "&sort=true"))
+        fetch("".concat(ckanUrl, "/api/3/action/show_dsl_metadata?resourceID=").concat(resourceID, "&sort=true"))
             .then(function (response) { return response.json(); })
             .then(function (data) {
             console.log("Loaded fields:", data.result.schema);
@@ -149,13 +127,16 @@ var CkanGraphicWalker = function (_a) {
             setLoading(false);
             onError === null || onError === void 0 ? void 0 : onError(error);
         });
-    }, [ckanUrl, datasetId, onFieldsLoaded, onError]);
-    // Set initial segment
+    }, [ckanUrl, resourceID, onFieldsLoaded, onError]);
     useEffect(function () {
-        if (storeRef.current && !loading) {
-            storeRef.current.setSegmentKey(initialSegment);
-        }
-    }, [loading, storeRef.current]);
+        var interval = setInterval(function () {
+            if (storeRef.current) {
+                storeRef.current.setSegmentKey(initialSegment);
+                clearInterval(interval);
+            }
+        }, 50);
+        return function () { return clearInterval(interval); };
+    }, [initialSegment]);
     var fetchRemoteData = function (payload) { return __awaiter(void 0, void 0, void 0, function () {
         var response, json, error_1;
         return __generator(this, function (_a) {
@@ -166,7 +147,7 @@ var CkanGraphicWalker = function (_a) {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                datasetId: datasetId,
+                                resourceID: resourceID,
                                 payload: payload,
                             }),
                         })];

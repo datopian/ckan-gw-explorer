@@ -3,7 +3,7 @@ export interface CkanGraphicWalkerProps {
     /** CKAN API base URL */
     ckanUrl: string;
     /** Dataset ID to load */
-    datasetId: string;
+    resourceID: string;
     /** Initial segment to show (vis, data, chat) */
     initialSegment?: "vis" | "data" | "chat";
     /** Custom timeout for data fetching */
@@ -59,8 +59,6 @@ export interface CkanGraphicWalkerProps {
     onDataFetched?: (data: any[]) => void;
     /** Callback for errors */
     onError?: (error: Error) => void;
-    /** Disable WebSocket features (suppresses connection errors) */
-    disableWebSocket?: boolean;
 }
 export declare const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps>;
 export default CkanGraphicWalker;

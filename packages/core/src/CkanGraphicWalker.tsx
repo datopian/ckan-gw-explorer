@@ -5,7 +5,7 @@ export interface CkanGraphicWalkerProps {
   /** CKAN API base URL */
   ckanUrl: string;
   /** Dataset ID to load */
-  datasetId: string;
+  resourceID: string;
   /** Initial segment to show (vis, data, chat) */
   initialSegment?: "vis" | "data" | "chat";
   /** Custom timeout for data fetching */
@@ -61,13 +61,11 @@ export interface CkanGraphicWalkerProps {
   onDataFetched?: (data: any[]) => void;
   /** Callback for errors */
   onError?: (error: Error) => void;
-  /** Disable WebSocket features (suppresses connection errors) */
-  disableWebSocket?: boolean;
 }
 
 export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
   ckanUrl = "http://localhost:5000",
-  datasetId,
+  resourceID,
   initialSegment = "data",
   timeout = 1000000,
   appearance = "light",
@@ -78,33 +76,10 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
   onFieldsLoaded,
   onDataFetched,
   onError,
-  disableWebSocket = false,
 }) => {
   const [fields, setFields] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const storeRef = useRef<any>(null);
-
-  // Suppress WebSocket errors if disabled
-  useEffect(() => {
-    if (disableWebSocket) {
-      const originalError = console.error;
-      console.error = (...args) => {
-        if (
-          args[0] &&
-          typeof args[0] === "string" &&
-          args[0].includes("WebSocket")
-        ) {
-          // Suppress WebSocket connection errors
-          return;
-        }
-        originalError.apply(console, args);
-      };
-
-      return () => {
-        console.error = originalError;
-      };
-    }
-  }, [disableWebSocket]);
 
   // Default UI theme
   const defaultUiTheme = {
@@ -153,7 +128,7 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
 
   useEffect(() => {
     fetch(
-      `${ckanUrl}/api/3/action/show_dsl_metadata?datasetId=${datasetId}&sort=true`
+      `${ckanUrl}/api/3/action/show_dsl_metadata?resourceID=${resourceID}&sort=true`
     )
       .then((response) => response.json())
       .then((data) => {
@@ -167,14 +142,17 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
         setLoading(false);
         onError?.(error);
       });
-  }, [ckanUrl, datasetId, onFieldsLoaded, onError]);
+  }, [ckanUrl, resourceID, onFieldsLoaded, onError]);
 
-  // Set initial segment
   useEffect(() => {
-    if (storeRef.current && !loading) {
-      storeRef.current.setSegmentKey(initialSegment);
-    }
-  }, [loading, storeRef.current]);
+    const interval = setInterval(() => {
+      if (storeRef.current) {
+        storeRef.current.setSegmentKey(initialSegment);
+        clearInterval(interval); 
+      }
+    }, 50);
+    return () => clearInterval(interval); 
+  }, [initialSegment]);
 
   const fetchRemoteData = async (payload: any) => {
     try {
@@ -182,7 +160,7 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          datasetId: datasetId,
+          resourceID: resourceID,
           payload: payload,
         }),
       });
