@@ -73,18 +73,24 @@ npm run start --workspace=packages/example
 ## Example of using the library
 
 ```tsx
-import { CkanGraphicWalker } from "ckan-gw-explorer";
+import { CkanGraphicWalker } from "@datopian/ckan-gw-explorer";
 
 function DataExplorer() {
   return (
-    <CkanGraphicWalker
-      ckanUrl="http://ckan.com"
-      datasetId="012474d1-7506-469d-926f-0e7a3d9aa41a"
-      appearance="light"
-      initialSegment="data"
-    />
+    <div style={{ height: "100vh" }}>
+      <CkanGraphicWalker
+        ckanUrl="https://your-ckan-instance.org"
+        resourceID="012474d1-7506-469d-926f-0e7a3d9aa41a"
+        appearance="light"
+        initialSegment="data"
+      />
+    </div>
   );
 }
 
 export default DataExplorer;
 ```
+
+> Published to npm as [`@datopian/ckan-gw-explorer`](https://www.npmjs.com/package/@datopian/ckan-gw-explorer).
+> See [packages/core/README.md](packages/core/README.md) for full props and the
+> React 19 / Graphic Walker version notes.

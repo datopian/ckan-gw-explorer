@@ -68,6 +68,16 @@ function __generator(thisArg, body) {
     }
 }
 
+function __spreadArray(to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+}
+
 typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
     var e = new Error(message);
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
@@ -114,6 +124,7 @@ var CkanGraphicWalker = function (_a) {
         },
     };
     useEffect(function () {
+        console.log("Fetching fields from CKAN resource ".concat(resourceID, " at ").concat(ckanUrl, "..."));
         fetch("".concat(ckanUrl, "/api/3/action/show_dsl_metadata?resourceID=").concat(resourceID, "&sort=true"))
             .then(function (response) { return response.json(); })
             .then(function (data) {
@@ -137,37 +148,53 @@ var CkanGraphicWalker = function (_a) {
         }, 50);
         return function () { return clearInterval(interval); };
     }, [initialSegment]);
-    var fetchRemoteData = function (payload) { return __awaiter(void 0, void 0, void 0, function () {
-        var response, json, error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 3, , 4]);
-                    return [4 /*yield*/, fetch("".concat(ckanUrl, "/api/3/action/dsl_query_data"), {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                resourceID: resourceID,
-                                payload: payload,
-                            }),
-                        })];
-                case 1:
-                    response = _a.sent();
-                    if (!response.ok)
-                        throw new Error("Network response not ok");
-                    return [4 /*yield*/, response.json()];
-                case 2:
-                    json = _a.sent();
-                    onDataFetched === null || onDataFetched === void 0 ? void 0 : onDataFetched(json.result.data);
-                    return [2 /*return*/, json.result.data];
-                case 3:
-                    error_1 = _a.sent();
-                    onError === null || onError === void 0 ? void 0 : onError(error_1);
-                    return [2 /*return*/, []];
-                case 4: return [2 /*return*/];
-            }
+    var fetchRemoteData = function (payload_1) {
+        var args_1 = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args_1[_i - 1] = arguments[_i];
+        }
+        return __awaiter(void 0, __spreadArray([payload_1], args_1, true), void 0, function (payload, attempt) {
+            var MAX_RETRIES, response, json, error_1;
+            if (attempt === void 0) { attempt = 0; }
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        MAX_RETRIES = 3;
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 7]);
+                        return [4 /*yield*/, fetch("".concat(ckanUrl, "/api/3/action/dsl_query_data"), {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    resourceID: resourceID,
+                                    payload: payload,
+                                }),
+                            })];
+                    case 2:
+                        response = _a.sent();
+                        if (!response.ok)
+                            throw new Error("Network response not ok (".concat(response.status, ")"));
+                        return [4 /*yield*/, response.json()];
+                    case 3:
+                        json = _a.sent();
+                        onDataFetched === null || onDataFetched === void 0 ? void 0 : onDataFetched(json.result.data);
+                        return [2 /*return*/, json.result.data];
+                    case 4:
+                        error_1 = _a.sent();
+                        if (!(attempt < MAX_RETRIES)) return [3 /*break*/, 6];
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 250 * (attempt + 1)); })];
+                    case 5:
+                        _a.sent();
+                        return [2 /*return*/, fetchRemoteData(payload, attempt + 1)];
+                    case 6:
+                        onError === null || onError === void 0 ? void 0 : onError(error_1);
+                        return [2 /*return*/, []];
+                    case 7: return [2 /*return*/];
+                }
+            });
         });
-    }); };
+    };
     if (loading) {
         return jsx("div", { children: "Loading fields..." });
     }

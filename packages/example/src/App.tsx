@@ -1,5 +1,5 @@
 import React from "react";
-import { CkanGraphicWalker } from "ckan-gw-explorer";
+import { CkanGraphicWalker } from "@datopian/ckan-gw-explorer";
 
 function App(props: React.ComponentProps<typeof CkanGraphicWalker>) {
   return (

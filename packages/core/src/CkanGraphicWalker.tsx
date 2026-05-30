@@ -127,6 +127,7 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
   };
 
   useEffect(() => {
+    console.log(`Fetching fields from CKAN resource ${resourceID} at ${ckanUrl}...`);
     fetch(
       `${ckanUrl}/api/3/action/show_dsl_metadata?resourceID=${resourceID}&sort=true`
     )
@@ -154,7 +155,8 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
     return () => clearInterval(interval); 
   }, [initialSegment]);
 
-  const fetchRemoteData = async (payload: any) => {
+  const fetchRemoteData = async (payload: any, attempt = 0): Promise<any[]> => {
+    const MAX_RETRIES = 3;
     try {
       const response = await fetch(`${ckanUrl}/api/3/action/dsl_query_data`, {
         method: "POST",
@@ -165,13 +167,21 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
         }),
       });
 
-      if (!response.ok) throw new Error("Network response not ok");
+      if (!response.ok) throw new Error(`Network response not ok (${response.status})`);
 
       let json = await response.json();
 
       onDataFetched?.(json.result.data);
       return json.result.data;
     } catch (error) {
+      // GraphicWalker fires many concurrent "profiling" requests when the field
+      // panel renders; some transiently fail (net::ERR_FAILED) under that load.
+      // Returning [] crashes GraphicWalker (it reads result[0].count), so retry
+      // with backoff before giving up.
+      if (attempt < MAX_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+        return fetchRemoteData(payload, attempt + 1);
+      }
       onError?.(error as Error);
       return [];
     }

@@ -15,8 +15,16 @@
     "install:all": "npm install --workspaces"
   },
   "devDependencies": {
-    "@types/react": "^18.3.23",
-    "@types/react-dom": "^18.3.7",
-    "typescript": "^4.9.5"
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "styled-components": "^6.1.19"
+  },
+  "overrides": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "ajv": "^8.17.1"
   }
 }
