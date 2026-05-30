@@ -18,6 +18,11 @@ haven't already:
 npm install react@^19 react-dom@^19 @kanaries/graphic-walker@0.5.0-alpha.4
 ```
 
+> **🛢️ Backend requirement.** Your CKAN instance must have the
+> [`ckanext-gwexplorer`](https://github.com/datopian/ckanext-gwexplorer) extension
+> installed — it provides the DSL query API this component depends on. See
+> [CKAN requirements](#ckan-requirements) below.
+
 > **⚠️ Graphic Walker version matters.** Use `@kanaries/graphic-walker@0.5.0-alpha.4`
 > (or newer) with React 19. The "stable" `0.5.0` release has a React-19 regression:
 > it bundles a vendored `react-dom/server` with a baked-in version check (throws
@@ -51,13 +56,18 @@ export default DataExplorer;
 
 ### CKAN requirements
 
-The component calls two CKAN action API endpoints on `ckanUrl`:
+This component requires the **DSL query API** on the CKAN backend, provided by
+the [`ckanext-gwexplorer`](https://github.com/datopian/ckanext-gwexplorer)
+extension. Install and enable it on your CKAN instance before using this
+component.
+
+It calls two action API endpoints on `ckanUrl`:
 
 - `GET  /api/3/action/show_dsl_metadata?resourceID=<id>&sort=true` — field schema
 - `POST /api/3/action/dsl_query_data` — paged/aggregated data queries
 
-These are provided by the DSL query extension on the CKAN backend. Your CKAN
-instance must expose them and allow CORS from your app's origin.
+Your CKAN instance must expose these endpoints (via `ckanext-gwexplorer`) and
+allow CORS from your app's origin.
 
 ## Props
 
