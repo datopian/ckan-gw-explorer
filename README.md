@@ -2,6 +2,11 @@
 
 A React component library for visualizing CKAN datasets using Graphic Walker.
 
+> **🛢️ Backend requirement.** Your CKAN instance must have the
+> [`ckanext-gwexplorer`](https://github.com/datopian/ckanext-gwexplorer) extension
+> installed — it provides the DSL query API (`show_dsl_metadata` and
+> `dsl_query_data`) that this component depends on.
+
 ## 📁 Project Structure
 
 ```
