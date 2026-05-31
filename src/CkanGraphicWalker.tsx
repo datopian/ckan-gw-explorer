@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { GraphicWalker } from '@kanaries/graphic-walker';
 
+/** Convert a #rgb / #rrggbb color to an rgba() string. Returns null if not hex. */
+function hexToRgba(hex: string, alpha: number): string | null {
+  if (!hex || hex[0] !== "#") return null;
+  let h = hex.slice(1);
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length !== 6) return null;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export interface CkanGraphicWalkerProps {
   /** CKAN API base URL */
   ckanUrl: string;
@@ -10,8 +22,8 @@ export interface CkanGraphicWalkerProps {
   initialSegment?: "vis" | "data" | "chat";
   /** Custom timeout for data fetching */
   timeout?: number;
-  /** Custom appearance theme */
-  appearance?: "light" | "dark";
+  /** Appearance theme; "media" follows the system preference. */
+  appearance?: "media" | "light" | "dark";
   /** Custom CSS class name */
   className?: string;
   /** Keep component alive between renders */
@@ -55,6 +67,31 @@ export interface CkanGraphicWalkerProps {
       };
     };
   };
+  /**
+   * Appearance of the main Data/Visualization tabs.
+   * - "underline" (default): GraphicWalker's native underline style.
+   * - "highlight": filled background highlight (tint derived from the theme's
+   *   primary color, or `activeColor`).
+   */
+  tabStyle?: {
+    variant?: "underline" | "highlight";
+    /** Base color for the highlight (defaults to uiTheme.light.primary). */
+    activeColor?: string;
+    /** Opacity of the active-tab background tint (default 0.16). */
+    activeOpacity?: number;
+    /** Opacity of the hover background tint (default 0.08). */
+    hoverOpacity?: number;
+    /** Border radius of the tab (default "0.5rem"). */
+    radius?: string;
+  };
+  /**
+   * Any additional prop supported by `@kanaries/graphic-walker`'s GraphicWalker
+   * — e.g. `hideProfiling`, `hideChartNav`, `hideSegmentNav`, `toolbar`,
+   * `vizThemeConfig`, `experimentalFeatures`, `defaultRenderer`, `geographicData`.
+   * Spread last, so it overrides the wrapper's defaults; lets consumers
+   * configure anything the underlying library provides.
+   */
+  graphicWalkerProps?: Partial<React.ComponentProps<typeof GraphicWalker>>;
   /** Callback when fields are loaded */
   onFieldsLoaded?: (fields: any[]) => void;
   /** Callback when data is fetched */
@@ -73,6 +110,8 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
   keepAlive = true,
   uiTheme,
   defaultConfig,
+  tabStyle,
+  graphicWalkerProps,
   onFieldsLoaded,
   onDataFetched,
   onError,
@@ -80,6 +119,7 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
   const [fields, setFields] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const storeRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Default UI theme
   const defaultUiTheme = {
@@ -149,11 +189,58 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
     const interval = setInterval(() => {
       if (storeRef.current) {
         storeRef.current.setSegmentKey(initialSegment);
-        clearInterval(interval); 
+        clearInterval(interval);
       }
     }, 50);
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, [initialSegment]);
+
+  // GraphicWalker renders inside a Shadow DOM, so external CSS can't reach its
+  // main Data/Visualization tabs. Inject a small stylesheet into the shadow
+  // root to render the active tab as a filled highlight (tint derived from the
+  // theme's primary color) instead of the default underline.
+  useEffect(() => {
+    if (loading) return;
+    // Opt-in: only restyle the tabs when "highlight" is requested.
+    if (tabStyle?.variant !== "highlight") return;
+    const base = tabStyle.activeColor || (uiTheme || defaultUiTheme).light.primary;
+    const radius = tabStyle.radius ?? "0.5rem";
+    const activeBg = hexToRgba(base, tabStyle.activeOpacity ?? 0.16) || "rgba(0, 0, 0, 0.06)";
+    const hoverBg = hexToRgba(base, tabStyle.hoverOpacity ?? 0.08) || "rgba(0, 0, 0, 0.04)";
+    const css = `
+      [role="tab"].border-b-2 {
+        border-radius: ${radius};
+        margin-right: 0.25rem;
+        border-bottom-color: transparent !important;
+      }
+      [role="tab"].border-b-2:hover { background-color: ${hoverBg}; }
+      [role="tab"].border-b-2[data-state="active"] {
+        background-color: ${activeBg} !important;
+        border-bottom-color: transparent !important;
+      }
+    `;
+    const STYLE_ID = "ckan-gw-tab-style";
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts += 1;
+      const host = Array.from(
+        containerRef.current?.querySelectorAll<HTMLElement>("*") || []
+      ).find((el) => el.shadowRoot);
+      const root = host?.shadowRoot;
+      if (root) {
+        if (!root.getElementById(STYLE_ID)) {
+          const style = document.createElement("style");
+          style.id = STYLE_ID;
+          style.textContent = css;
+          root.appendChild(style);
+        }
+        clearInterval(timer);
+      } else if (attempts > 120) {
+        clearInterval(timer);
+      }
+    }, 100);
+    return () => clearInterval(timer);
+  }, [loading, uiTheme, tabStyle]);
 
   const fetchRemoteData = async (payload: any, attempt = 0): Promise<any[]> => {
     const MAX_RETRIES = 3;
@@ -192,17 +279,20 @@ export const CkanGraphicWalker: React.FC<CkanGraphicWalkerProps> = ({
   }
 
   return (
-    <GraphicWalker
-      computation={fetchRemoteData}
-      computationTimeout={timeout}
-      fields={fields}
-      appearance={appearance}
-      className={className}
-      storeRef={storeRef}
-      keepAlive={keepAlive}
-      defaultConfig={defaultConfigValue}
-      uiTheme={uiTheme || defaultUiTheme}
-    />
+    <div ref={containerRef} style={{ height: "100%", width: "100%" }}>
+      <GraphicWalker
+        computation={fetchRemoteData}
+        computationTimeout={timeout}
+        fields={fields}
+        appearance={appearance}
+        className={className}
+        storeRef={storeRef}
+        keepAlive={keepAlive}
+        defaultConfig={defaultConfigValue}
+        uiTheme={uiTheme || defaultUiTheme}
+        {...graphicWalkerProps}
+      />
+    </div>
   );
 };
 

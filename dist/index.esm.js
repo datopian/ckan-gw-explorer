@@ -83,12 +83,27 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
+/** Convert a #rgb / #rrggbb color to an rgba() string. Returns null if not hex. */
+function hexToRgba(hex, alpha) {
+    if (!hex || hex[0] !== "#")
+        return null;
+    var h = hex.slice(1);
+    if (h.length === 3)
+        h = h.split("").map(function (c) { return c + c; }).join("");
+    if (h.length !== 6)
+        return null;
+    var r = parseInt(h.slice(0, 2), 16);
+    var g = parseInt(h.slice(2, 4), 16);
+    var b = parseInt(h.slice(4, 6), 16);
+    return "rgba(".concat(r, ", ").concat(g, ", ").concat(b, ", ").concat(alpha, ")");
+}
 var CkanGraphicWalker = function (_a) {
     var _b, _c, _d, _e, _f, _g;
-    var _h = _a.ckanUrl, ckanUrl = _h === void 0 ? "http://localhost:5000" : _h, resourceID = _a.resourceID, _j = _a.initialSegment, initialSegment = _j === void 0 ? "data" : _j, _k = _a.timeout, timeout = _k === void 0 ? 1000000 : _k, _l = _a.appearance, appearance = _l === void 0 ? "light" : _l, _m = _a.className, className = _m === void 0 ? "ckan-gw-explorer" : _m, _o = _a.keepAlive, keepAlive = _o === void 0 ? true : _o, uiTheme = _a.uiTheme, defaultConfig = _a.defaultConfig, onFieldsLoaded = _a.onFieldsLoaded, onDataFetched = _a.onDataFetched, onError = _a.onError;
+    var _h = _a.ckanUrl, ckanUrl = _h === void 0 ? "http://localhost:5000" : _h, resourceID = _a.resourceID, _j = _a.initialSegment, initialSegment = _j === void 0 ? "data" : _j, _k = _a.timeout, timeout = _k === void 0 ? 1000000 : _k, _l = _a.appearance, appearance = _l === void 0 ? "light" : _l, _m = _a.className, className = _m === void 0 ? "ckan-gw-explorer" : _m, _o = _a.keepAlive, keepAlive = _o === void 0 ? true : _o, uiTheme = _a.uiTheme, defaultConfig = _a.defaultConfig, tabStyle = _a.tabStyle, graphicWalkerProps = _a.graphicWalkerProps, onFieldsLoaded = _a.onFieldsLoaded, onDataFetched = _a.onDataFetched, onError = _a.onError;
     var _p = useState([]), fields = _p[0], setFields = _p[1];
     var _q = useState(true), loading = _q[0], setLoading = _q[1];
     var storeRef = useRef(null);
+    var containerRef = useRef(null);
     // Default UI theme
     var defaultUiTheme = {
         light: {
@@ -148,6 +163,44 @@ var CkanGraphicWalker = function (_a) {
         }, 50);
         return function () { return clearInterval(interval); };
     }, [initialSegment]);
+    // GraphicWalker renders inside a Shadow DOM, so external CSS can't reach its
+    // main Data/Visualization tabs. Inject a small stylesheet into the shadow
+    // root to render the active tab as a filled highlight (tint derived from the
+    // theme's primary color) instead of the default underline.
+    useEffect(function () {
+        var _a, _b, _c;
+        if (loading)
+            return;
+        // Opt-in: only restyle the tabs when "highlight" is requested.
+        if ((tabStyle === null || tabStyle === void 0 ? void 0 : tabStyle.variant) !== "highlight")
+            return;
+        var base = tabStyle.activeColor || (uiTheme || defaultUiTheme).light.primary;
+        var radius = (_a = tabStyle.radius) !== null && _a !== void 0 ? _a : "0.5rem";
+        var activeBg = hexToRgba(base, (_b = tabStyle.activeOpacity) !== null && _b !== void 0 ? _b : 0.16) || "rgba(0, 0, 0, 0.06)";
+        var hoverBg = hexToRgba(base, (_c = tabStyle.hoverOpacity) !== null && _c !== void 0 ? _c : 0.08) || "rgba(0, 0, 0, 0.04)";
+        var css = "\n      [role=\"tab\"].border-b-2 {\n        border-radius: ".concat(radius, ";\n        margin-right: 0.25rem;\n        border-bottom-color: transparent !important;\n      }\n      [role=\"tab\"].border-b-2:hover { background-color: ").concat(hoverBg, "; }\n      [role=\"tab\"].border-b-2[data-state=\"active\"] {\n        background-color: ").concat(activeBg, " !important;\n        border-bottom-color: transparent !important;\n      }\n    ");
+        var STYLE_ID = "ckan-gw-tab-style";
+        var attempts = 0;
+        var timer = setInterval(function () {
+            var _a;
+            attempts += 1;
+            var host = Array.from(((_a = containerRef.current) === null || _a === void 0 ? void 0 : _a.querySelectorAll("*")) || []).find(function (el) { return el.shadowRoot; });
+            var root = host === null || host === void 0 ? void 0 : host.shadowRoot;
+            if (root) {
+                if (!root.getElementById(STYLE_ID)) {
+                    var style = document.createElement("style");
+                    style.id = STYLE_ID;
+                    style.textContent = css;
+                    root.appendChild(style);
+                }
+                clearInterval(timer);
+            }
+            else if (attempts > 120) {
+                clearInterval(timer);
+            }
+        }, 100);
+        return function () { return clearInterval(timer); };
+    }, [loading, uiTheme, tabStyle]);
     var fetchRemoteData = function (payload_1) {
         var args_1 = [];
         for (var _i = 1; _i < arguments.length; _i++) {
@@ -198,7 +251,7 @@ var CkanGraphicWalker = function (_a) {
     if (loading) {
         return jsx("div", { children: "Loading fields..." });
     }
-    return (jsx(GraphicWalker, { computation: fetchRemoteData, computationTimeout: timeout, fields: fields, appearance: appearance, className: className, storeRef: storeRef, keepAlive: keepAlive, defaultConfig: defaultConfigValue, uiTheme: uiTheme || defaultUiTheme }));
+    return (jsx("div", { ref: containerRef, style: { height: "100%", width: "100%" }, children: jsx(GraphicWalker, __assign({ computation: fetchRemoteData, computationTimeout: timeout, fields: fields, appearance: appearance, className: className, storeRef: storeRef, keepAlive: keepAlive, defaultConfig: defaultConfigValue, uiTheme: uiTheme || defaultUiTheme }, graphicWalkerProps)) }));
 };
 
 export { CkanGraphicWalker };
