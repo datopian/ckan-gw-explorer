@@ -161,7 +161,12 @@ var CkanGraphicWalker = function (_a) {
             onError === null || onError === void 0 ? void 0 : onError(error);
         });
     }, [ckanUrl, resourceID, onFieldsLoaded, onError]);
+    // Apply the initial segment after GraphicWalker (re)mounts. Re-runs on
+    // resourceID/loading change too, so switching resources doesn't fall back to
+    // GraphicWalker's default (Visualization) segment.
     react.useEffect(function () {
+        if (loading)
+            return;
         var interval = setInterval(function () {
             if (storeRef.current) {
                 storeRef.current.setSegmentKey(initialSegment);
@@ -169,7 +174,7 @@ var CkanGraphicWalker = function (_a) {
             }
         }, 50);
         return function () { return clearInterval(interval); };
-    }, [initialSegment]);
+    }, [initialSegment, resourceID, loading]);
     // GraphicWalker renders inside a Shadow DOM, so external CSS can't reach its
     // main Data/Visualization tabs. Inject a small stylesheet into the shadow
     // root to render the active tab as a filled highlight (tint derived from the
