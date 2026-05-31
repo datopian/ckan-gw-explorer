@@ -14,10 +14,10 @@
     "@types/node": "^16.11.56",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
-    "@datopian/ckan-gw-explorer": "file:../core",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-scripts": "^5.0.1",
+    "styled-components": "^6.1.19",
     "typescript": "^5.9.3",
     "web-vitals": "^2.1.4"
   },
@@ -26,7 +26,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev-sync": "cd ../core && npm run build && echo 'Library rebuilt!'",
+    "dev-sync": "cd .. && npm run build && echo 'Library rebuilt!'",
     "start-with-sync": "npm run dev-sync && npm start"
   },
   "eslintConfig": {

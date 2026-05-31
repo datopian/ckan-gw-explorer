@@ -1,30 +1,70 @@
 {
-  "name": "ckan-gw-explorer",
-  "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "packages/core",
-    "packages/example"
+  "name": "@datopian/ckan-gw-explorer",
+  "version": "0.1.0",
+  "private": false,
+  "description": "React component for exploring and visualizing CKAN datasets with Graphic Walker.",
+  "license": "MIT",
+  "author": "OKNP <sagarg@oknp.org>",
+  "homepage": "https://github.com/datopian/ckan-gw-explorer#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/datopian/ckan-gw-explorer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/datopian/ckan-gw-explorer/issues"
+  },
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
   ],
-  "scripts": {
-    "build": "npm run build --workspace=packages/core",
-    "example": "npm run start --workspace=packages/example",
-    "example:dev": "npm run start-with-sync --workspace=packages/example",
-    "build:all": "npm run build --workspaces",
-    "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist",
-    "install:all": "npm install --workspaces"
+  "publishConfig": {
+    "access": "public"
   },
-  "devDependencies": {
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
+  "keywords": [
+    "ckan",
+    "data-visualization",
+    "graphic-walker",
+    "react",
+    "typescript"
+  ],
+  "peerDependencies": {
+    "@kanaries/graphic-walker": ">=0.5.0-alpha.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "styled-components": "^6.1.19"
   },
-  "overrides": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "ajv": "^8.17.1"
+  "devDependencies": {
+    "@kanaries/graphic-walker": "0.5.0-alpha.4",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "rollup": "^3.29.5",
+    "rollup-plugin-css-only": "^4.5.2",
+    "rollup-plugin-dts": "^5.3.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "prepare": "rollup -c",
+    "example": "npm --prefix example start",
+    "example:install": "npm --prefix example install",
+    "example:sync": "node scripts/sync-example.js",
+    "example:dev": "npm run example:sync && npm --prefix example start",
+    "build:example": "npm run example:sync && npm --prefix example run build"
   }
 }
