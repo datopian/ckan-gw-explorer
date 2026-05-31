@@ -141,6 +141,11 @@ var CkanGraphicWalker = function (_a) {
         },
     };
     react.useEffect(function () {
+        // Reset to the loading state when the resource changes so GraphicWalker is
+        // unmounted and never rendered with the previous resource's fields (which
+        // causes a "(intermediate value) is not iterable" crash on resource switch).
+        setLoading(true);
+        setFields([]);
         console.log("Fetching fields from CKAN resource ".concat(resourceID, " at ").concat(ckanUrl, "..."));
         fetch("".concat(ckanUrl, "/api/3/action/show_dsl_metadata?resourceID=").concat(resourceID, "&sort=true"))
             .then(function (response) { return response.json(); })
@@ -253,7 +258,10 @@ var CkanGraphicWalker = function (_a) {
     if (loading) {
         return jsxRuntime.jsx("div", { children: "Loading fields..." });
     }
-    return (jsxRuntime.jsx("div", { ref: containerRef, style: { height: "100%", width: "100%" }, children: jsxRuntime.jsx(graphicWalker.GraphicWalker, __assign({ computation: fetchRemoteData, computationTimeout: timeout, fields: fields, appearance: appearance, className: className, storeRef: storeRef, keepAlive: keepAlive, defaultConfig: defaultConfigValue, uiTheme: uiTheme || defaultUiTheme }, graphicWalkerProps)) }));
+    return (jsxRuntime.jsx("div", { ref: containerRef, style: { height: "100%", width: "100%" }, children: jsxRuntime.jsx(graphicWalker.GraphicWalker
+        // Key + per-resource keepAlive ensure each resource gets its own fresh
+        // store, so switching resources never reuses stale state.
+        , __assign({ computation: fetchRemoteData, computationTimeout: timeout, fields: fields, appearance: appearance, className: className, storeRef: storeRef, keepAlive: keepAlive === true ? resourceID : keepAlive, defaultConfig: defaultConfigValue, uiTheme: uiTheme || defaultUiTheme }, graphicWalkerProps), resourceID) }));
 };
 
 exports.CkanGraphicWalker = CkanGraphicWalker;
